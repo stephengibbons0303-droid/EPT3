@@ -329,7 +329,7 @@ if 'debug_logs' not in st.session_state:
 
 example_banks = load_example_banks()
 
-st.title("🤖 AI Test Question Generator - NEW ARCHITECTURE")
+st.title("🤖 Test Question Generator V3")
 st.caption("Three-stage pipeline with simplified generation and binary validation")
 
 if example_banks is None:
