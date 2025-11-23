@@ -1,0 +1,55 @@
+﻿Item_Number,Assessment_Focus,Question_Prompt,Answer_A,Answer_B,Answer_C,Answer_D,Correct_Answer,CEFR_rating,Category
+V1,Vocabulary: days of the week ('Sunday'),The day after Saturday is ____.,Sunday,Monday,Friday,Thursday,A,A1,Vocabulary
+V2,Vocabulary: social actions ('meet'),People usually shake hands when they ____.,meet,sleep,eat,walk,A,A1,Vocabulary
+V3,Vocabulary,The bright _______ made me wear sunglasses today.,moon,stars,sun,clouds,C,A1,Vocabulary
+V4,Vocabulary,He had toast and eggs for _______ this morning.,lunch,dinner,breakfast,supper,C,A1,Vocabulary
+V5,Vocabulary,She wore a new _______ to her friend's wedding.,jacket,dress,shirt,coat,B,A1,Vocabulary
+V6,Vocabulary,The children played happily with their new _______.,homework,toys,books,food,B,A1,Vocabulary
+V7,Vocabulary,The family sat at the kitchen _______ to eat dinner.,chair,table,sofa,desk,B,A1,Vocabulary
+V8,Vocabulary,He drives his new _______ to work every morning.,bicycle,car,boat,plane,B,A1,Vocabulary
+V9,Vocabulary,The medicine helped to make the headache _______.,better,gone,away,finished,A,A1,Vocabulary
+V10,Vocabulary,Please put the milk in the _______ or it will go bad.,freezer,fridge,cabinet,drawer,B,A2,Vocabulary
+V11,Vocabulary,They went to the busy _______ to buy fresh vegetables.,library,market,cinema,park,B,A2,Vocabulary
+V12,Vocabulary,She bought a piece of chocolate _______ for dessert.,cake,bread,fruit,rice,A,A2,Vocabulary
+V13,Vocabulary,He went to see the doctor at the _______.,school,shop,hospital,station,C,A2,Vocabulary
+V14,Word Association,The old photos brought back childhood _____.,memories,corners,pieces,pages,A,A2,Vocabulary
+V15,Synonym,The movie was quite _____ - I almost fell asleep.,boring,poor,thin,lost,A,A2,Vocabulary
+V16,Vocabulary Inference,The new cafe quickly became _____ with local residents.,ready,popular,empty,closed,B,A2,Vocabulary
+V17,Synonym,They had to _____ their plans because of bad weather.,change,paint,draw,build,A,A2,Vocabulary
+V18,Phrasal verb 'turn off',Don't forget to ____ the light when you leave.,turn off,turn on,turn up,turn over,A,A2,Vocabulary
+V19,Word Meaning,Fresh bread means recently _____.,washed,sliced,baked,wrapped,C,A2,Vocabulary
+V20,Collocation,Please _____ quiet in the library.,hold,make,keep,save,C,A2,Vocabulary
+V21,Word in Context,The music was too _____ so I couldn't hear the conversation.,thick,loud,deep,heavy,B,A2,Vocabulary
+V22,Collocation,She _____ a lot of time helping younger students.,spent,saved,pulled,pushed,A,A2,Vocabulary
+V23,Word Nuance,The instructions were not _____ - I couldn't understand them.,clear,wide,round,deep,A,A2,Vocabulary
+V24,Vocabulary Application,The local cafe _____ a variety of breakfast options.,builds,writes,offers,draws,C,A2,Vocabulary
+V25,Vocabulary Inference,The weather _____ perfect for our beach trip.,waited,seemed,lived,grew,B,A2,Vocabulary
+V26,Word in Context,His _____ explanation helped me understand the problem.,clear,bright,loud,sharp,A,A2,Vocabulary
+V27,Vocabulary Selection,The child was very ______ and wouldn't stop crying.,calm,quiet,upset,happy,C,B1,Vocabulary
+V28,Vocabulary Inference,"She is a very ______ person, always ready to help.",selfish,unkind,generous,rude,C,B1,Vocabulary
+V29,Vocabulary,I need to fill up my car with _______ soon.,petrol,oil,water,gas,A,B1,Vocabulary
+V30,Vocabulary,We need to _______ our meeting until Friday.,change,move,put,take,B,B1,Vocabulary
+V31,Vocabulary,They had to _______ their picnic because of the rain.,cancel,begin,start,close,A,B1,Vocabulary
+V32,Vocabulary,She finally _______ to swim in the deep end of the pool.,learned,knew,managed,did,C,B1,Vocabulary
+V33,Vocabulary in Context,The busy shop was _____ with customers.,dressed,packed,covered,painted,B,B1,Vocabulary
+V34,Connotation,The hotel room was _____ and comfortable.,polite,happy,cozy,healthy,C,B1,Vocabulary
+V35,Word Family,She felt _____ after finishing the long race.,brown,yellow,exhausted,asleep,C,B1,Vocabulary
+V36,Collocation,He needs to _____ more effort into his studies.,bring,put,do,push,B,B1,Vocabulary
+V37,Vocabulary,The new rules have _______ many changes at school.,brought,made,done,given,A,B1,Vocabulary
+V38,Phrasal Verb,She _____ down his suggestion without thinking about it.,sat,turned,walked,ran,B,B1,Vocabulary
+V39,Precise Word Choice,He _____ his opinion during the class discussion.,painted,drew,expressed,built,C,B1,Vocabulary
+V40,Vocabulary Discrimination,The restaurant became _____ during lunch hour.,locked,folded,dressed,packed,D,B1,Vocabulary
+V41,Vocabulary Selection,The team needs to _____ their game plan.,paint,wash,adjust,fold,C,B2,Vocabulary
+V42,Vocabulary Discrimination,He felt a sense of ______ after passing the exam.,disappointment,relief,anxiety,frustration,B,B2,Vocabulary
+V43,Vocabulary in Context,The shop window _____ beautiful handmade jewelry.,carried,displayed,planted,dressed,B,B2,Vocabulary
+V44,Vocabulary: academic word choice,The research findings _____ the theory that was proposed last year.,support,carry,recommend,keep,A,B2,Vocabulary
+V45,Collocation: verb + noun,The new policy will help to _____ concerns about data privacy.,undergo,tell,address,talk,C,B2,Vocabulary
+V46,Phrasal verb: figurative meaning,The deal _____ at the last minute due to disagreements.,fell through,broke through,came off,went off,A,B2,Vocabulary
+V47,Vocabulary: register and formality,The manager asked employees to _____ from using personal devices during meetings.,mitigate,refrain,avoid,quit,B,B2,Vocabulary
+V48,Vocabulary: precise word choice,The committee will _____ the budget proposal at next week's meeting.,circumvent,look,express,scrutinize,D,B2,Vocabulary
+V49,Precise Word Choice,"The student's answer was ______, he missed the point.",accurate,irrelevant,correct,precise,B,C1,Vocabulary
+V50,Vocabulary: nuanced meaning,The technology has become _____ in modern workplaces worldwide.,comprehensive,ambiguous,ubiquitous,frequent,C,C1,Vocabulary
+V51,Collocation: fixed expression,The journalist's claims _____ doubt on the official report.,put,cast,developed,placed,B,C1,Vocabulary
+V52,Vocabulary: idiomatic expression,Good internship opportunities are _____ in this competitive market.,small and distant,rare and scattered,few and far between,limited and separated,C,C1,Vocabulary
+V53,Vocabulary: near-synonym distinction,The new regulations may _____ the problem rather than solve it.,enhance,exacerbate,alleviate,undergo,B,C1,Vocabulary
+V54,Phrasal verb: abstract meaning,The study _____ the rise in housing prices over the past decade.,counts for,implements,accounts for,encourages,C,C1,Vocabulary

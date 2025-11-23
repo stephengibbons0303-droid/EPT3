@@ -1,0 +1,56 @@
+﻿Item_Number,Assessment_Focus,Question_Prompt,Answer_A,Answer_B,Answer_C,Answer_D,Correct_Answer,CEFR_rating,Category
+G1,Present simple tense question with 'do',____ you speak English?,Do,Are,Is,Does,A,A1,Grammar
+G2,Present simple of 'be' in plural form ('are'),They ____ not here right now.,are,is,have,do,A,A1,Grammar
+G3,Base form after 'should',You should ____ your teeth twice a day.,brush,brushes,brushing,brushed,A,A1,Grammar
+G4,Quantifiers with countable nouns ('any'),There aren't ____ chairs in the room.,any,some,a,an,A,A1,Grammar
+G5,Present simple tense third person singular ('goes'),He ____ to school every day.,goes,go,going,went,A,A1,Grammar
+G6,Present simple tense third person singular ('goes'),She ____ to the gym every Monday.,goes,go,going,gone,A,A1,Grammar
+G7,Adverb of manner ('well'),She speaks Spanish very ____.,well,good,better,best,A,A1,Grammar
+G8,Present simple tense third person singular ('plays'),She ____ tennis every weekend.,plays,play,is playing,played,A,A1,Grammar
+G9,Quantifiers with countable nouns ('some'),There are ____ apples on the table.,some,any,much,little,A,A1,Grammar
+G10,Adverb of manner ('well'),He speaks English ____.,well,good,better,best,A,A1,Grammar
+G11,Present simple tense third person singular ('leaves'),The train ____ at 6 p.m. every day.,leaves,leave,left,is leaving,A,A1,Grammar
+G12,present simple (habits/facts),He drives his new _______ to work every morning.,bicycle,car,boat,plane,B,A1,Grammar
+G13,present simple (habits/facts),It's important ____ English every day.,to practice,practicing,practice,practiced,A,A1,Grammar
+G14,prepositions of place,She sat ______ the table and ate her lunch.,on,at,in,over,B,A2,Grammar
+G15,future simple (will),She ____ here tomorrow.,won't be,isn't,doesn't,hasn't,A,A2,Grammar
+G16,prepositions of time,He had toast and eggs for _______ this morning.,lunch,dinner,breakfast,supper,C,A2,Grammar
+G17,past simple (completed actions),The letter ______ yesterday.,was written,wrote,written,is writing,A,A2,Grammar
+G18,past simple (completed actions),He had his car ____ yesterday.,repaired,repair,repairing,to repair,A,A2,Grammar
+G19,question formation (auxiliary),"He hasn't arrived yet, ____ he?",has,hasn't,did,doesn't,A,A2,Grammar
+G20,negative forms (full),She is not only intelligent ____ also kind.,but,and,so,or,A,A2,Grammar
+G21,prepositions of place,There are ____ apples on the table.,some,any,much,little,A,A2,Grammar
+G22,future simple (will),He won't pass the test ____ he studies harder.,unless,if,when,although,A,A2,Grammar
+G23,past continuous (interrupted action),He ____ his homework when I called.,was doing,did,is doing,does,A,B1,Grammar
+G24,modal verbs (permission/ability),She asked me if I ____ help her.,could,can,will,may,A,B1,Grammar
+G25,prepositions of movement,He drives carefully to avoid ____ accidents.,having,to have,have,had,A,B1,Grammar
+G26,prepositions of movement,He ____ whether to accept the offer.,is considering,considers,considered,has considered,A,B1,Grammar
+G27,modal verbs (permission/ability),She can't find her book. It's ____ lost.,probably,probable,may,might,A,B1,Grammar
+G28,prepositions of movement,He ____ smoke when he was young.,used to,use to,is used to,uses to,A,B1,Grammar
+G29,prepositions of movement,We need to decide ____ to go on vacation.,where,which,who,whom,A,B1,Grammar
+G30,quantifiers (countable),We need ____ sugar in the recipe.,some,many,few,any,A,B1,Grammar
+G31,modal verbs (obligation/advice),Every student must bring ______ own book.,his,her,their,its,A,B1,Grammar
+G32,prepositions of movement,The medicine helped to make the headache _______.,better,gone,away,finished,A,B1,Grammar
+G33,modal verbs (permission/ability),Could you tell me how much ____ ?,it costs,does it cost,cost it,is it cost,A,B1,Grammar
+G34,prepositions of movement,They went to the busy _______ to buy fresh vegetables.,library,market,cinema,park,B,B1,Grammar
+G35,relative clauses (defining),There is a man ____ car was stolen.,whose,who's,which,whom,A,B1,Grammar
+G36,relative clauses (defining),The woman ______ lives next door is a doctor.,which,who,whom,whose,B,B1,Grammar
+G37,prepositions (general),They have lived here ____ 2010.,since,for,in,at,A,B1,Grammar
+G38,prepositions of movement,He'd rather ____ at home tonight.,stay,to stay,staying,stayed,A,B1,Grammar
+G39,prepositions of movement,They had to _____ their plans because of bad weather.,change,paint,draw,build,A,B1,Grammar
+G40,prepositions of movement,I need something ______.,to eat,eating,eat,eaten,A,B1,Grammar
+G41,prepositions of movement,She prefers tea ____ coffee.,to,than,over,from,A,B1,Grammar
+G42,modal verbs (future/prediction),If only I ____ more time!,had,have,will have,was having,A,B2,Grammar
+G43,modal verbs (future/prediction),Please put the milk in the _______ or it will go bad.,freezer,fridge,cabinet,drawer,B,B2,Grammar
+G44,modal verbs (future/prediction),I wish I ____ more money.,had,have,will have,would have,A,B2,Grammar
+G45,modal verbs (future/prediction),The children ______ (play) in the park when it started to rain.,played,were playing,have played,will play,B,B2,Grammar
+G46,modal verbs (future/prediction),"If I were you, I ____ take that job.",would,will,am,was,A,B2,Grammar
+G47,modal verbs (future/prediction),"If I see him, I ____ him your message.",will give,gave,would give,give,A,B2,Grammar
+G48,mixed conditionals (past condition â†’ present result),"If she _____ more attention in her economics classes, she wouldn't be struggling with her finances now.",has paid,had paid,will pay,pays,B,C1,Grammar
+G49,inversion for emphasis (negative adverbs),Never before _____ such a dramatic change in public opinion about climate policy.,we have seen,have we seen,we saw,we haven't seen,B,C1,Grammar
+G50,inversion for emphasis (conditional inversion),"_____ the opportunity to study abroad, I would have accepted it immediately.",If I had offered,Had I been offered,If I would be offered,Should I be offered,B,C1,Grammar
+G51,advanced modal verbs (speculation about past),The streets are completely dry. It _____ during the night after all.,can't have rained,mustn't rain,shouldn't have rained,needn't rain,A,C1,Grammar
+G52,subjunctive mood (after verbs of demand),The committee insisted that every member _____ present at the emergency meeting.,were,has been,be,would be,C,C1,Grammar
+G53,cleft sentences (it-cleft for emphasis),_____ Sarah who suggested we should meet at the coffee shop.,It was,There was,That was,She was,A,C1,Grammar
+G54,cleft sentences (what-cleft for emphasis),_____ most about the course was the practical experience we gained.,That I appreciated,What I appreciated,Which I appreciated,I appreciated,B,C1,Grammar
+G55,advanced participle clauses (perfect participle),"_____ to the landlord several times to complain about the noise, he finally agreed to speak to the tenants.",Going,Having been,Having went,There having been,B,C1,Grammar
