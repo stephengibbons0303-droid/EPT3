@@ -14,7 +14,7 @@ import output_formatter
 
 st.set_page_config(
     page_title="Agentic Test Generator - NEW ARCHITECTURE",
-    layout="wide"
+    layout="centered"
 )
 
 # Load the key from Streamlit secrets
