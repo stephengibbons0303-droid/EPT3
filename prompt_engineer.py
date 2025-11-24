@@ -264,6 +264,8 @@ CONSTRAINTS:
    - Correct: "brush" (base) → Candidates: "comb", "wash", "scrub" (NOT "combs", "washes", "scrubs")
    - Correct: "brushes" (3rd singular) → Candidates: "combs", "washes", "scrubs" (NOT "comb", "wash", "scrub")
    - Correct: "plowed through" (past) → Candidates: "broke through", "pushed through" (NOT "break through", "push through")
+   **FORM IDENTIFICATION RULE:** Before generating candidates, check: Does the correct answer follow 'to', a modal (can/will/should/want to), or a plural subject (I/you/we/they)? If YES, it is BASE FORM - all candidates must be base form with NO -s/-es/-ed endings.
+   
 
 3. **SAME WORD CLASS AND GRAMMATICAL FORM REQUIRED:** All candidates must match the exact grammatical structure of the correct answer. If the correct answer is a present tense third person singular verb, all candidates must be present tense third person singular verbs.
 
