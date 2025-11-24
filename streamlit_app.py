@@ -248,6 +248,8 @@ def get_focus_options(q_type, cefr):
                 "Future (Future Perfect Continuous)",
                 "Cleft Sentences (e.g., 'What I need is...')",
                 "Ellipsis",
+                "Participle Clauses (Perfect/Past)",
+                "Subjunctive Mood"
             ]
     
     if q_type == "Vocabulary":
@@ -287,8 +289,11 @@ def get_focus_options(q_type, cefr):
                 "Synonym (high-level, low-frequency)", 
                 "Idiomatic Expressions", 
                 "Functional Usage (advanced nuance, persuasion)", 
-                "Collocation (academic, e.g., 'conduct research')"
-                "Advanced Phrasal Verbs & Idioms"
+                "Collocation (academic, e.g., 'conduct research')",
+                "Advanced Phrasal Verbs & Idioms",
+                "Hedging Language",
+                "Binomials",
+                "Discourse Markers (Cohesion)"
             ]
     
     return ["No options loaded for this level"]
