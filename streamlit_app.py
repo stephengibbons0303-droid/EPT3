@@ -248,7 +248,6 @@ def get_focus_options(q_type, cefr):
                 "Future (Future Perfect Continuous)",
                 "Cleft Sentences (e.g., 'What I need is...')",
                 "Ellipsis",
-                "Advanced Phrasal Verbs & Idioms"
             ]
     
     if q_type == "Vocabulary":
@@ -290,6 +289,7 @@ def get_focus_options(q_type, cefr):
                 "Functional Usage (advanced nuance, persuasion)", 
                 "Register Trap (formal vs. academic)", 
                 "Collocation (academic, e.g., 'conduct research')"
+                "Advanced Phrasal Verbs & Idioms"
             ]
     
     return ["No options loaded for this level"]
