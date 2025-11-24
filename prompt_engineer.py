@@ -442,7 +442,7 @@ For EACH question, you must test ALL FIVE candidates by performing the following
    - YES = The sentence makes logical sense and uses natural English
    - NO = The sentence contains collocational errors, register mismatches, or idiomatic violations
 
-3. **NATIVE SPEAKER ACCEPTABILITY CHECK:** For candidates that pass A and B, ask one final question: "Would a competent native speaker actually use this word/phrase in this exact context?" If YES, this is a multiple-correct-answer problem - REJECT the candidate.
+3. **UNIQUENESS CHECK:** For candidates that pass A and B, ask: "If an examiner saw BOTH the correct answer AND this candidate as student responses, would both receive full marks?" If YES, reject the candidate - the test has multiple correct answers. Only the intended answer should be fully acceptable.
 
 4. **FILTERING CRITERIA:**
    - REJECT candidates that answer NO to Question A (grammatically incorrect)
