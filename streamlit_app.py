@@ -287,7 +287,6 @@ def get_focus_options(q_type, cefr):
                 "Synonym (high-level, low-frequency)", 
                 "Idiomatic Expressions", 
                 "Functional Usage (advanced nuance, persuasion)", 
-                "Register Trap (formal vs. academic)", 
                 "Collocation (academic, e.g., 'conduct research')"
                 "Advanced Phrasal Verbs & Idioms"
             ]
