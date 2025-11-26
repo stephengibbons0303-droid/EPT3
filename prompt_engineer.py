@@ -200,7 +200,14 @@ CONSTRAINTS:
 
 2. **GRAMMATICAL PARALLELISM:** All candidates must match the word count and construction type of the correct answer. If the correct answer is two words, candidates should be two words.
 
-3. **LEXICAL OVERLAP PROHIBITION:** Do NOT use any words that appear AFTER the blank in the Complete Sentence. Example: "He ____ have won the race" → do not use "have" or "won" in candidates. This prevents nonsensical repetition.
+3. **LEXICAL OVERLAP PROHIBITION:** Do NOT use any words that appear AFTER the blank in the Complete Sentence.
+
+Examples of VIOLATIONS:
+- "Do you have ____ sugar?" → WRONG: "a sugar", "the sugar" (repeats "sugar")
+- "She doesn't have ____ friends" → WRONG: "no friends", "zero friends" (repeats "friends")
+- "He ____ have won" → WRONG: "might have", "should won" (repeats "have" or "won")
+
+VERIFICATION: Before submitting, scan the post-blank text and ensure no candidates repeat those words.
 
 4. **TARGET FORM COVERAGE:** For Assessment Focus containing "vs" (e.g., "Gerunds & Infinitives", "going to vs will"), candidates MUST include examples of BOTH forms being tested. Example: if testing gerunds vs infinitives, include both gerund forms AND infinitive forms in your 5 candidates.
 
@@ -282,7 +289,15 @@ CONSTRAINTS:
 
 7. **NO LEXICAL OVERLAP:** Do not use any form of the correct answer word or its root in candidates.
 
-8. **ANTI-REPETITION:** Avoid using identical candidate words across multiple questions in this batch.
+8. **POST-BLANK LEXICAL OVERLAP PROHIBITION:** Do NOT use any words that appear AFTER the blank in the Complete Sentence.
+
+Examples of VIOLATIONS:
+- "I need to buy ____ apples" → WRONG: "some apples", "fresh apples" (repeats "apples")
+- "plant a tree for more ____" → WRONG: "more shade", "extra shade" (repeats "more")
+
+VERIFICATION: Scan the post-blank text and ensure no candidates repeat those words.
+
+9. **ANTI-REPETITION:** Avoid using identical candidate words across multiple questions in this batch.
 
 MANDATORY OUTPUT FORMAT:
 {{
@@ -346,9 +361,15 @@ For EACH question, you must test ALL FIVE candidates by performing the following
 
 3. **PROFICIENCY-APPROPRIATE ERROR CHECK:** For each candidate, ask: "Does this error type match the CEFR level being tested?" Reject candidates with elementary errors (e.g., "didn't needed", "hasn't to", "must to") when testing B2+ constructions. These are too easy and fail to assess the target skill.
 
-4. **BINARY CLASSIFICATION:** For each candidate, answer YES or NO:
-   - YES = The sentence is grammatically correct (structural rules are followed)
-   - NO = The sentence is grammatically incorrect (structural rules are violated)
+4. **UNIQUENESS TEST:** For each candidate, answer this question:
+   
+   "If a student chose this candidate, could they argue it's grammatically acceptable?"
+   - YES = REJECT the candidate (multiple correct answers exist)
+   - NO = RETAIN the candidate (clearly grammatically wrong)
+
+Critical examples:
+- "It ____ cold outside, so wear a jacket" + candidate "was" → Student argues: "It was cold [earlier], so wear a jacket [now]" → YES, defensible → REJECT
+- "It ____ cold outside, so wear a jacket" + candidate "are" → Student argues: "It are cold" → NO, indefensible → RETAIN
 
 5. **FILTER AND SELECT:** 
    - REJECT all candidates that produce grammatically correct sentences (YES answers)
@@ -432,15 +453,16 @@ For EACH question, you must test ALL FIVE candidates by performing the following
 
 1. **SENTENCE RECONSTRUCTION:** Take the Complete Sentence and replace the Correct Answer with each candidate individually.
 
-2. **DUAL VALIDATION TEST:** For each reconstructed sentence, answer TWO questions:
+2. **EXAMINER ACCEPTANCE TEST:** For each reconstructed sentence, answer this question:
    
-   Question A: Is the sentence grammatically correct in standard English?
-   - YES = The sentence follows all structural rules
-   - NO = The sentence violates grammatical rules
-   
-   Question B: Is the sentence semantically appropriate in this context?
-   - YES = The sentence makes logical sense and uses natural English
-   - NO = The sentence contains collocational errors, register mismatches, or idiomatic violations
+   "Would a test examiner award full marks if a student chose this candidate?"
+   - YES = REJECT the candidate (acceptable alternative answer)
+   - NO = RETAIN the candidate (clearly inappropriate)
+
+Critical examples:
+- "He felt very ____ after good news" + candidate "excited" → Examiner accepts "excited" as valid positive emotion → YES → REJECT
+- "He felt very ____ after good news" + candidate "confused" → Examiner rejects "confused" (contradicts context) → NO → RETAIN
+- "plant a tree for more ____" + candidate "color" → Examiner accepts "color" (cherry blossoms provide color) → YES → REJECT
 
 3. **UNIQUENESS CHECK:** For candidates that pass A and B, ask: "If an examiner saw BOTH the correct answer AND this candidate as student responses, would both receive full marks?" If YES, reject the candidate - the test has multiple correct answers. Only the intended answer should be fully acceptable.
 
