@@ -342,7 +342,7 @@ if example_banks is None:
 
 st.write("This version implements architectural separation of generation and validation.")
 
-tab1, tab2, tab3 = st.tabs(["🚀 Generator", "🔧 Refinement Workshop", "🐛 Debug Logs"])
+tab1, tab2, tab3, tab4 = st.tabs(["🚀 Generator", "🔧 Refinement Workshop", "🐛 Debug Logs", "📚 Vocabulary List Generator"])
 
 # =============================
 # TAB 1: GENERATOR
