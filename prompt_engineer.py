@@ -41,6 +41,282 @@ def get_few_shot_examples(job, example_banks):
         output += "### EXAMPLE:\n" + json.dumps(ex_dict) + "\n\n"
     return output
 
+# =============================================================================
+# THREE NEW FUNCTIONS TO ADD TO prompt_engineer.py
+# =============================================================================
+# 
+# INSTRUCTIONS:
+# 1. Open your existing prompt_engineer.py file
+# 2. Locate the get_few_shot_examples() function (around line 15-50)
+# 3. Copy all three functions below
+# 4. Paste them immediately AFTER get_few_shot_examples() ends
+# 5. Your existing functions remain unchanged
+#
+# =============================================================================
+
+
+def create_vocab_list_stage1_prompt(job_list, question_form):
+    """
+    STAGE ONE for vocabulary list upload: Generates complete sentences with correct answers.
+    Includes question form constraints based on user selection.
+    """
+    question_form_instructions = {
+        "Random Mix": """
+QUESTION FORM VARIETY: Use diverse question forms across the batch. Include:
+- Simple gap fill (most common): "Our new sidewalk is made of ___________."
+- Definition through function: "The fuselage is where the ___________."
+- Cause-Effect completion: "The wing is damaged. The ___________ can't leave on time."
+- Dialogue completion: "Sue: Did everything go alright? Mary: It was ___________, everyone enjoyed themselves."
+- Logical relationship: "Tom is not ___________. He has an abundant amount of money."
+""",
+        "Simple gap fill": """
+QUESTION FORM CONSTRAINT: ALL questions must use simple gap fill format.
+Example: "Our new sidewalk is made of ___________."
+The sentence should provide clear context that makes the target word the logical choice.
+""",
+        "Definition through function/description": """
+QUESTION FORM CONSTRAINT: ALL questions must use definition through function/description format.
+Example: "The fuselage is where the ___________."
+The target vocabulary word should complete the functional definition.
+""",
+        "Cause-Effect completion": """
+QUESTION FORM CONSTRAINT: ALL questions must use cause-effect completion format.
+Example: "The wing is damaged. The ___________ can't leave on time."
+The target word should logically complete the consequence.
+""",
+        "Dialogue completion": """
+QUESTION FORM CONSTRAINT: ALL questions must use dialogue completion format.
+Example: "Sue: Did everything go alright? Mary: It was ___________, everyone enjoyed themselves."
+The target word should fit naturally in conversational context.
+""",
+        "Logical relationship completion": """
+QUESTION FORM CONSTRAINT: ALL questions must use logical relationship completion format.
+Example: "Tom is not ___________. He has an abundant amount of money."
+The target word should complete the logical connection between clauses.
+"""
+    }
+    
+    form_instruction = question_form_instructions.get(question_form, question_form_instructions["Random Mix"])
+    
+    system_msg = f"""You are an expert ELT content creator. You will generate exactly {len(job_list)} complete test questions in a single JSON response targeting specific vocabulary items provided by the user.
+
+CRITICAL: Your entire response must be a JSON object with a "questions" key containing an array of exactly {len(job_list)} question objects."""
+    
+    job_specs = []
+    for job in job_list:
+        job_specs.append({
+            "job_id": job['job_id'],
+            "cefr": job['cefr'],
+            "target_vocabulary": job['target_vocabulary'],
+            "definition": job.get('definition', ''),
+            "part_of_speech": job.get('part_of_speech', '')
+        })
+    
+    user_msg = f"""
+TASK: Create exactly {len(job_list)} vocabulary test questions targeting specific vocabulary items.
+
+VOCABULARY TARGETS (one question for each):
+{json.dumps(job_specs, indent=2)}
+
+{form_instruction}
+
+GENERATION INSTRUCTIONS FOR EACH QUESTION:
+
+1. **TARGET VOCABULARY INTEGRATION:** The "Complete Sentence" must contain the target vocabulary item in a natural, authentic context appropriate for the CEFR level. Use the provided definition to ensure accurate usage.
+
+2. **PART OF SPEECH MATCHING:** Ensure the target vocabulary is used in the correct grammatical form matching the "Part of Speech" field.
+
+3. **SEMANTIC CONTEXT CLUES:** Include context clues that make only the target vocabulary semantically appropriate while keeping all options grammatically valid.
+
+4. **DIFFICULTY CALIBRATION:** Match sentence complexity and vocabulary sophistication to the CEFR level.
+
+5. **NEGATIVE CONSTRAINT (VERBOSITY):** Sentences must be concise (max 2 sentences for simple forms, max 3 for dialogue). No preambles.
+
+6. **NEGATIVE CONSTRAINT (DEFINITION LEAK):** Do NOT include the definition text directly in the sentence.
+
+7. **ANTI-REPETITION:** Each question must use a unique scenario and context.
+
+MANDATORY OUTPUT FORMAT:
+{{
+  "questions": [
+    {{
+      "Item Number": "...",
+      "Target Vocabulary": "...",
+      "Complete Sentence": "...",
+      "Correct Answer": "...",
+      "Context Clue Location": "...",
+      "Context Clue Explanation": "...",
+      "CEFR rating": "...",
+      "Category": "Vocabulary"
+    }},
+    ... (continue until you have exactly {len(job_list)} question objects)
+  ]
+}}
+
+VERIFICATION: Count your question objects before submitting. You must have exactly {len(job_list)} items in the "questions" array.
+"""
+    return system_msg, user_msg
+
+
+def create_vocab_list_stage2_prompt(job_list, stage1_outputs, vocabulary_list_df):
+    """
+    STAGE TWO for vocabulary list: Generates candidate distractors using HYBRID approach.
+    - 2-3 distractors from the uploaded vocabulary list (same part of speech when possible)
+    - 1-2 generated semantic alternatives
+    """
+    system_msg = f"""You are an expert ELT test designer specializing in vocabulary assessment. You will generate candidate distractors for exactly {len(job_list)} vocabulary questions using a hybrid sourcing strategy.
+
+CRITICAL: Your entire response must be a JSON object with a "candidates" key containing an array of exactly {len(job_list)} candidate sets."""
+    
+    vocab_items_by_pos = {}
+    if vocabulary_list_df is not None and not vocabulary_list_df.empty:
+        for _, row in vocabulary_list_df.iterrows():
+            pos = row.get('Part of Speech', 'unknown')
+            vocab_item = row.get('Base Vocabulary Item', '')
+            if vocab_item:
+                if pos not in vocab_items_by_pos:
+                    vocab_items_by_pos[pos] = []
+                vocab_items_by_pos[pos].append(vocab_item)
+    
+    vocab_pool_summary = json.dumps(vocab_items_by_pos, indent=2)
+    
+    user_msg = f"""
+TASK: Generate 5 candidate distractors for ALL {len(job_list)} VOCABULARY questions using HYBRID sourcing.
+
+INPUT FROM STAGE 1:
+{json.dumps(stage1_outputs, indent=2)}
+
+AVAILABLE VOCABULARY POOL (organized by part of speech):
+{vocab_pool_summary}
+
+HYBRID DISTRACTOR SOURCING STRATEGY:
+
+For EACH question, generate 5 candidates using this approach:
+- **2-3 distractors:** Select from the vocabulary pool (preferably matching the target word's part of speech)
+- **1-2 distractors:** Generate semantic alternatives that aren't in the vocabulary pool
+
+CONSTRAINTS:
+
+1. **WORD COUNT LIMIT:** Each candidate must be MAXIMUM 3 words.
+
+2. **VOCABULARY POOL SELECTION RULES:**
+   - Prefer items from the SAME part of speech as the target vocabulary
+   - If insufficient items in same POS, use items from related POS
+   - Exclude the target vocabulary item itself
+   - Select items that are semantically plausible but contextually inappropriate
+
+3. **GENERATED ALTERNATIVES RULES:**
+   - Must match the exact grammatical form of the target vocabulary
+   - Should be semantically related but contextually wrong
+   - Can include synonyms, near-synonyms, or words from the same semantic field
+
+4. **EXACT INFLECTIONAL FORM MATCHING:** ALL candidates must match the PRECISE grammatical form of the correct answer.
+
+5. **CONTEXTUAL INAPPROPRIATENESS TYPES:**
+   - Register conflict
+   - Collocational violation
+   - Semantic mismatch
+   - Connotation error
+
+6. **NO LEXICAL OVERLAP:** Do not use any form of the correct answer word or its root in candidates.
+
+7. **POST-BLANK LEXICAL OVERLAP PROHIBITION:** Do NOT use any words that appear AFTER the blank in the Complete Sentence.
+
+8. **ANTI-REPETITION:** Avoid using identical candidate words across multiple questions.
+
+MANDATORY OUTPUT FORMAT:
+{{
+  "candidates": [
+    {{
+      "Item Number": "...",
+      "Candidate A": "...",
+      "Candidate B": "...",
+      "Candidate C": "...",
+      "Candidate D": "...",
+      "Candidate E": "...",
+      "Source Notes": "...[which candidates are from pool vs. generated]..."
+    }},
+    ... (exactly {len(job_list)} candidate sets)
+  ]
+}}
+
+VERIFICATION: You must generate exactly {len(job_list)} candidate sets with 5 candidates each.
+"""
+    return system_msg, user_msg
+
+
+def create_vocab_list_stage3_prompt(job_list, stage1_outputs, stage2_outputs):
+    """
+    STAGE THREE for vocabulary list: Binary validation (same as standard vocabulary validation).
+    """
+    system_msg = f"""You are an expert English vocabulary validator. You will evaluate candidate distractors for exactly {len(job_list)} vocabulary questions and return your validated selections in a JSON object with a "validated" key."""
+    
+    validation_input = []
+    for i, (job, s1, s2) in enumerate(zip(job_list, stage1_outputs, stage2_outputs)):
+        complete_sentence = s1.get("Complete Sentence", "")
+        correct_answer = s1.get("Correct Answer", "")
+        
+        validation_input.append({
+            "Item Number": s1.get("Item Number", ""),
+            "Target Vocabulary": s1.get("Target Vocabulary", ""),
+            "Complete Sentence": complete_sentence,
+            "Correct Answer": correct_answer,
+            "Candidate A": s2.get("Candidate A", ""),
+            "Candidate B": s2.get("Candidate B", ""),
+            "Candidate C": s2.get("Candidate C", ""),
+            "Candidate D": s2.get("Candidate D", ""),
+            "Candidate E": s2.get("Candidate E", ""),
+            "CEFR": job['cefr']
+        })
+    
+    user_msg = f"""
+TASK: Validate candidate distractors for ALL {len(job_list)} VOCABULARY questions and select the final three distractors per question.
+
+VALIDATION INPUT:
+{json.dumps(validation_input, indent=2)}
+
+VALIDATION PROCEDURE:
+
+For EACH question, test ALL FIVE candidates:
+
+1. **SENTENCE RECONSTRUCTION:** Replace the Correct Answer with each candidate individually.
+
+2. **EXAMINER ACCEPTANCE TEST:** "Would a test examiner award full marks if a student chose this candidate?"
+   - YES = REJECT the candidate
+   - NO = RETAIN the candidate
+
+3. **UNIQUENESS CHECK:** "Would both the correct answer AND this candidate receive full marks?" If YES, reject.
+
+4. **FILTERING CRITERIA:**
+   - REJECT candidates that are grammatically incorrect
+   - REJECT candidates that are semantically appropriate
+   - REJECT candidates that native speakers would accept
+   - RETAIN only candidates that are grammatically correct BUT semantically/idiomatically wrong
+
+5. **SELECT FINAL THREE:** From retained pool, select the best THREE based on plausibility and diversity.
+
+MANDATORY OUTPUT FORMAT:
+{{
+  "validated": [
+    {{
+      "Item Number": "...",
+      "Selected Distractor A": "...",
+      "Selected Distractor B": "...",
+      "Selected Distractor C": "...",
+      "Validation Notes": "..."
+    }},
+    ... (exactly {len(job_list)} validated sets)
+  ]
+}}
+
+VERIFICATION: You must provide exactly {len(job_list)} validated distractor sets with exactly 3 selected distractors each.
+"""
+    return system_msg, user_msg
+
+
+# =============================================================================
+# END OF NEW FUNCTIONS
+# =============================================================================
 
 # --------------------------------------------------------------------------
 # Strategy: Sequential BATCH MODE - THREE-STAGE ARCHITECTURE (MINIMAL FIXES)
