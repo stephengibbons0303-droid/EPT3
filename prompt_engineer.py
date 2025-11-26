@@ -267,29 +267,42 @@ CONSTRAINTS:
 
 1. **WORD COUNT LIMIT:** Each candidate must be MAXIMUM 3 words.
 
-2. **EXACT INFLECTIONAL FORM MATCHING:** ALL candidates must match the PRECISE grammatical form of the correct answer - same tense, aspect, person, number, and voice. Examples:
+2. **WORD FORM ENFORCEMENT:** If the Assessment Focus is "Word Form", candidates MUST include different word classes derived from related roots.
+
+Examples:
+- Assessment Focus: "Word Form (noun/verb/adj)" → Correct answer: "complement" (verb)
+  → CORRECT candidates: "compliment" (noun), "complementary" (adj), "completion" (noun)
+  → WRONG candidates: "criticize", "contrast", "complicate" (all verbs, same class)
+
+- Assessment Focus: "Word Form (noun/verb/adj)" → Correct answer: "seasoned" (adj)
+  → CORRECT candidates: "season" (noun), "seasonal" (adj), "seasoning" (noun)
+  → WRONG candidates: "baked", "chopped", "froze" (all verbs, same class)
+
+If Assessment Focus is NOT "Word Form", then candidates should be same word class as correct answer.
+
+3. **EXACT INFLECTIONAL FORM MATCHING:** ALL candidates must match the PRECISE grammatical form of the correct answer - same tense, aspect, person, number, and voice. Examples:
    - Correct: "brush" (base) → Candidates: "comb", "wash", "scrub" (NOT "combs", "washes", "scrubs")
    - Correct: "brushes" (3rd singular) → Candidates: "combs", "washes", "scrubs" (NOT "comb", "wash", "scrub")
    - Correct: "plowed through" (past) → Candidates: "broke through", "pushed through" (NOT "break through", "push through")
    **FORM IDENTIFICATION RULE:** Before generating candidates, check: Does the correct answer follow 'to', a modal (can/will/should/want to), or a plural subject (I/you/we/they)? If YES, it is BASE FORM - all candidates must be base form with NO -s/-es/-ed endings.
    
 
-3. **SAME WORD CLASS AND GRAMMATICAL FORM REQUIRED:** All candidates must match the exact grammatical structure of the correct answer. If the correct answer is a present tense third person singular verb, all candidates must be present tense third person singular verbs.
+4. **SAME WORD CLASS AND GRAMMATICAL FORM REQUIRED:** All candidates must match the exact grammatical structure of the correct answer. If the correct answer is a present tense third person singular verb, all candidates must be present tense third person singular verbs.
 
-4. **SEMANTIC FIELD PROXIMITY:** Generate alternatives from the SAME semantic field as the correct answer. For example:
+5. **SEMANTIC FIELD PROXIMITY:** Generate alternatives from the SAME semantic field as the correct answer. For example:
    - If the correct answer is "take a look at" (visual observation), candidates should be other observation phrases like "behold", "gaze upon", "pay heed to"
    - If the correct answer is "postpone" (delay action), candidates should be other temporal or planning verbs like "possess", "position", "compose"
 
-5. **CONTEXTUAL INAPPROPRIATENESS TYPES:**
+6. **CONTEXTUAL INAPPROPRIATENESS TYPES:**
    - **Register Conflict:** Formal/archaic terms in casual contexts (e.g., "behold" for "look at")
    - **Collocational Mismatch:** Verbs that don't combine naturally with following nouns (e.g., "make breakfast" vs "do breakfast")
    - **Idiomatic Violation:** Phrases that violate standard usage patterns (e.g., "pay heed to" with visual objects)
 
-6. **PHONETIC AND SEMANTIC ALTERNATIVES PERMITTED:** For higher-level vocabulary (B1+), include at least one phonetically similar alternative that matches lexical sophistication (e.g., "possess" or "position" as alternatives to "postpone").
+7. **PHONETIC AND SEMANTIC ALTERNATIVES PERMITTED:** For higher-level vocabulary (B1+), include at least one phonetically similar alternative that matches lexical sophistication (e.g., "possess" or "position" as alternatives to "postpone").
 
-7. **NO LEXICAL OVERLAP:** Do not use any form of the correct answer word or its root in candidates.
+8. **NO LEXICAL OVERLAP:** Do not use any form of the correct answer word or its root in candidates.
 
-8. **POST-BLANK LEXICAL OVERLAP PROHIBITION:** Do NOT use any words that appear AFTER the blank in the Complete Sentence.
+9. **POST-BLANK LEXICAL OVERLAP PROHIBITION:** Do NOT use any words that appear AFTER the blank in the Complete Sentence.
 
 Examples of VIOLATIONS:
 - "I need to buy ____ apples" → WRONG: "some apples", "fresh apples" (repeats "apples")
@@ -297,7 +310,7 @@ Examples of VIOLATIONS:
 
 VERIFICATION: Scan the post-blank text and ensure no candidates repeat those words.
 
-9. **ANTI-REPETITION:** Avoid using identical candidate words across multiple questions in this batch.
+10. **ANTI-REPETITION:** Avoid using identical candidate words across multiple questions in this batch.
 
 MANDATORY OUTPUT FORMAT:
 {{
