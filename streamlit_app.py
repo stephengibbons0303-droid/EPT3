@@ -789,3 +789,364 @@ with tab3:
     if st.button("Clear Debug Logs"):
         st.session_state.debug_logs = []
         st.rerun()
+# =============================
+# TAB 4: VOCABULARY LIST GENERATOR (UPDATED WITH COLUMN VALIDATION)
+# =============================
+with tab4:
+    st.header("📚 Vocabulary List Generator")
+    st.caption("Upload a vocabulary list CSV and generate questions for specific target words")
+    
+    # File upload section
+    st.subheader("1. Upload Vocabulary List")
+    vocab_csv_file = st.file_uploader(
+        "Upload your vocabulary CSV file",
+        type="csv",
+        help="CSV must contain: ConceptID, Base Vocabulary Item, Part of Speech, Definition",
+        key="vocab_csv_upload"
+    )
+    
+    vocab_df = None
+    if vocab_csv_file is not None:
+        try:
+            vocab_df = pd.read_csv(vocab_csv_file)
+            
+            # VALIDATE REQUIRED COLUMNS
+            required_columns = ['ConceptID', 'Base Vocabulary Item', 'Part of Speech', 'Definition']
+            missing_columns = [col for col in required_columns if col not in vocab_df.columns]
+            
+            if missing_columns:
+                st.error(f"Missing required columns: {', '.join(missing_columns)}")
+                st.info("Your CSV must include: ConceptID, Base Vocabulary Item, Part of Speech, Definition")
+                vocab_df = None
+            else:
+                st.success(f"✓ Loaded {len(vocab_df)} vocabulary items with all required fields")
+                
+                # Display column validation summary
+                with st.expander("Column Validation Summary", expanded=False):
+                    validation_data = {
+                        "Column": required_columns,
+                        "Status": ["✓ Found" for _ in required_columns],
+                        "Sample Value": [
+                            str(vocab_df[col].iloc[0])[:50] if len(vocab_df) > 0 else "N/A" 
+                            for col in required_columns
+                        ]
+                    }
+                    st.dataframe(pd.DataFrame(validation_data), use_container_width=True)
+                
+                # Display preview with all essential columns
+                with st.expander("Preview uploaded vocabulary (first 10 items)", expanded=False):
+                    preview_cols = ['ConceptID', 'Base Vocabulary Item', 'Part of Speech', 'Definition']
+                    st.dataframe(vocab_df[preview_cols].head(10), use_container_width=True)
+                    
+                # Display part of speech distribution
+                with st.expander("Part of Speech Distribution", expanded=False):
+                    pos_counts = vocab_df['Part of Speech'].value_counts()
+                    st.bar_chart(pos_counts)
+                    st.caption(f"Total unique parts of speech: {len(pos_counts)}")
+                
+        except Exception as e:
+            st.error(f"Error reading CSV: {e}")
+            vocab_df = None
+    
+    if vocab_df is not None:
+        st.divider()
+        
+        # Configuration section
+        st.subheader("2. Configure Generation Settings")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            vocab_cefr = st.selectbox(
+                "CEFR Level",
+                ("A1", "A2", "B1", "B2", "C1"),
+                key="vocab_cefr",
+                help="Select the proficiency level for all questions in this batch"
+            )
+            
+            question_form = st.selectbox(
+                "Question Form",
+                (
+                    "Random Mix",
+                    "Simple gap fill",
+                    "Definition through function/description",
+                    "Cause-Effect completion",
+                    "Dialogue completion",
+                    "Logical relationship completion"
+                ),
+                key="question_form",
+                help="Choose the question format style"
+            )
+            
+            use_definitions = st.checkbox(
+                "Use definitions in generation",
+                value=True,
+                help="Include vocabulary definitions to guide question generation. Recommended for specialized or technical vocabulary.",
+                key="use_definitions"
+            )
+        
+        with col2:
+            batch_selection_mode = st.radio(
+                "Batch Selection Method",
+                ("First N items", "ConceptID range"),
+                key="batch_mode"
+            )
+            
+            if batch_selection_mode == "First N items":
+                num_items = st.number_input(
+                    "Number of items to generate",
+                    min_value=1,
+                    max_value=len(vocab_df),
+                    value=min(10, len(vocab_df)),
+                    key="vocab_batch_size"
+                )
+            else:
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    start_concept_id = st.text_input(
+                        "Start ConceptID",
+                        placeholder="e.g., 12-1-V-1-i",
+                        key="start_concept_id"
+                    )
+                with col_b:
+                    end_concept_id = st.text_input(
+                        "End ConceptID",
+                        placeholder="e.g., 12-1-V-10-i",
+                        key="end_concept_id"
+                    )
+        
+        st.divider()
+        
+        # Generate button
+        if st.button("Generate Questions from Vocabulary List", type="primary", use_container_width=True):
+            # Select vocabulary items based on batch mode
+            selected_vocab = None
+            
+            if batch_selection_mode == "First N items":
+                selected_vocab = vocab_df.head(num_items).copy()
+            else:
+                if start_concept_id and end_concept_id:
+                    # Filter by ConceptID range
+                    mask = (vocab_df['ConceptID'] >= start_concept_id) & (vocab_df['ConceptID'] <= end_concept_id)
+                    selected_vocab = vocab_df[mask].copy()
+                    
+                    if len(selected_vocab) == 0:
+                        st.error("No vocabulary items found in the specified ConceptID range.")
+                else:
+                    st.error("Please enter both Start and End ConceptID values.")
+            
+            if selected_vocab is not None and len(selected_vocab) > 0:
+                st.info(f"Generating questions for {len(selected_vocab)} vocabulary items...")
+                
+                # Display selected items summary
+                with st.expander("Selected Vocabulary Items", expanded=True):
+                    display_cols = ['ConceptID', 'Base Vocabulary Item', 'Part of Speech']
+                    st.dataframe(selected_vocab[display_cols], use_container_width=True)
+                
+                with st.spinner(f"Processing {len(selected_vocab)} vocabulary items..."):
+                    try:
+                        # Build job list for vocabulary items with EXPLICIT field extraction
+                        vocab_job_list = []
+                        for idx, row in selected_vocab.iterrows():
+                            # EXPLICIT extraction of all required fields
+                            concept_id = row.get('ConceptID', f"V-{idx}")
+                            base_vocab = row.get('Base Vocabulary Item', '').strip()
+                            part_of_speech = row.get('Part of Speech', '').strip()
+                            definition = row.get('Definition', '').strip() if use_definitions else ''
+                            
+                            # Validate essential fields
+                            if not base_vocab:
+                                st.warning(f"Skipping row {idx}: Missing Base Vocabulary Item")
+                                continue
+                            if not part_of_speech:
+                                st.warning(f"Skipping row {idx} ({base_vocab}): Missing Part of Speech")
+                                continue
+                            
+                            job = {
+                                "job_id": concept_id,
+                                "type": "Vocabulary",
+                                "cefr": vocab_cefr,
+                                "target_vocabulary": base_vocab,
+                                "definition": definition,
+                                "part_of_speech": part_of_speech,
+                                "strategy": "Sequential Batch (3-Call)"
+                            }
+                            vocab_job_list.append(job)
+                        
+                        if len(vocab_job_list) == 0:
+                            st.error("No valid vocabulary items to process after validation.")
+                            st.stop()
+                        
+                        st.session_state.debug_logs = []
+                        st.session_state.debug_logs.append("="*80)
+                        st.session_state.debug_logs.append("VOCABULARY LIST GENERATION - STARTING")
+                        st.session_state.debug_logs.append(f"Vocabulary items: {len(vocab_job_list)}")
+                        st.session_state.debug_logs.append(f"Question form: {question_form}")
+                        st.session_state.debug_logs.append(f"Using definitions: {use_definitions}")
+                        st.session_state.debug_logs.append("="*80)
+                        
+                        # Log extracted fields for first item (debugging)
+                        if len(vocab_job_list) > 0:
+                            sample_job = vocab_job_list[0]
+                            st.session_state.debug_logs.append("\nSample extracted fields:")
+                            st.session_state.debug_logs.append(f"  ConceptID: {sample_job['job_id']}")
+                            st.session_state.debug_logs.append(f"  Target Vocabulary: {sample_job['target_vocabulary']}")
+                            st.session_state.debug_logs.append(f"  Part of Speech: {sample_job['part_of_speech']}")
+                            st.session_state.debug_logs.append(f"  Definition: {sample_job['definition'][:50] if sample_job['definition'] else 'Not included'}")
+                        
+                        # Import the vocabulary list functions
+                        from prompt_engineer import (
+                            create_vocab_list_stage1_prompt,
+                            create_vocab_list_stage2_prompt,
+                            create_vocab_list_stage3_prompt
+                        )
+                        
+                        # ===== STAGE 1: GENERATE SENTENCES =====
+                        status_text = st.empty()
+                        status_text.text("Stage 1: Generating sentences with target vocabulary...")
+                        st.session_state.debug_logs.append("\n--- STAGE 1: SENTENCE GENERATION ---")
+                        
+                        sys_msg_1, user_msg_1 = create_vocab_list_stage1_prompt(vocab_job_list, question_form)
+                        raw_stage1 = llm_service.call_llm([sys_msg_1, user_msg_1], user_api_key)
+                        
+                        stage1_data, stage1_error = output_formatter.parse_response(raw_stage1)
+                        if stage1_error:
+                            st.error(f"Stage 1 failed: {stage1_error}")
+                            st.stop()
+                        
+                        if isinstance(stage1_data, dict) and "questions" in stage1_data:
+                            stage1_data_list = stage1_data["questions"]
+                        else:
+                            stage1_data_list, extract_error = output_formatter.extract_array_from_response(stage1_data)
+                            if extract_error:
+                                st.error(f"Stage 1 extraction failed: {extract_error}")
+                                st.stop()
+                        
+                        st.session_state.debug_logs.append(f"Stage 1: Generated {len(stage1_data_list)} sentences")
+                        
+                        # ===== STAGE 2: GENERATE CANDIDATES =====
+                        status_text.text("Stage 2: Generating candidate distractors (hybrid sourcing)...")
+                        st.session_state.debug_logs.append("\n--- STAGE 2: HYBRID DISTRACTOR GENERATION ---")
+                        st.session_state.debug_logs.append(f"Vocabulary pool size: {len(vocab_df)} items")
+                        
+                        sys_msg_2, user_msg_2 = create_vocab_list_stage2_prompt(
+                            vocab_job_list, stage1_data_list, vocab_df
+                        )
+                        raw_stage2 = llm_service.call_llm([sys_msg_2, user_msg_2], user_api_key)
+                        
+                        stage2_data, stage2_error = output_formatter.parse_response(raw_stage2)
+                        if stage2_error:
+                            st.error(f"Stage 2 failed: {stage2_error}")
+                            st.stop()
+                        
+                        if isinstance(stage2_data, dict) and "candidates" in stage2_data:
+                            stage2_data_list = stage2_data["candidates"]
+                        else:
+                            stage2_data_list, extract_error = output_formatter.extract_array_from_response(stage2_data)
+                            if extract_error:
+                                st.error(f"Stage 2 extraction failed: {extract_error}")
+                                st.stop()
+                        
+                        st.session_state.debug_logs.append(f"Stage 2: Generated {len(stage2_data_list)} candidate sets")
+                        
+                        # ===== STAGE 3: VALIDATE AND FILTER =====
+                        status_text.text("Stage 3: Validating and selecting final distractors...")
+                        st.session_state.debug_logs.append("\n--- STAGE 3: VALIDATION & FILTERING ---")
+                        
+                        sys_msg_3, user_msg_3 = create_vocab_list_stage3_prompt(
+                            vocab_job_list, stage1_data_list, stage2_data_list
+                        )
+                        raw_stage3 = llm_service.call_llm([sys_msg_3, user_msg_3], user_api_key)
+                        
+                        stage3_data, stage3_error = output_formatter.parse_response(raw_stage3)
+                        if stage3_error:
+                            st.error(f"Stage 3 failed: {stage3_error}")
+                            st.stop()
+                        
+                        if isinstance(stage3_data, dict) and "validated" in stage3_data:
+                            stage3_data_list = stage3_data["validated"]
+                        else:
+                            stage3_data_list, extract_error = output_formatter.extract_array_from_response(stage3_data)
+                            if extract_error:
+                                st.error(f"Stage 3 extraction failed: {extract_error}")
+                                st.stop()
+                        
+                        st.session_state.debug_logs.append(f"Stage 3: Validated {len(stage3_data_list)} distractor sets")
+                        
+                        # ===== FINAL ASSEMBLY =====
+                        st.session_state.debug_logs.append("\n--- FINAL ASSEMBLY ---")
+                        vocab_questions = []
+                        
+                        for i in range(len(stage1_data_list)):
+                            if i < len(stage3_data_list) and i < len(selected_vocab):
+                                stage1_data = stage1_data_list[i]
+                                stage3_data = stage3_data_list[i]
+                                vocab_row = selected_vocab.iloc[i]
+                                
+                                complete_sentence = stage1_data.get("Complete Sentence", "")
+                                correct_answer = stage1_data.get("Correct Answer", "")
+                                question_prompt = complete_sentence.replace(correct_answer, "____")
+                                
+                                options = [
+                                    stage3_data.get("Selected Distractor A", ""),
+                                    stage3_data.get("Selected Distractor B", ""),
+                                    stage3_data.get("Selected Distractor C", ""),
+                                    correct_answer
+                                ]
+                                random.shuffle(options)
+                                correct_letter = chr(65 + options.index(correct_answer))
+                                
+                                vocab_question = {
+                                    "ConceptID": vocab_row.get('ConceptID', ''),
+                                    "Base Vocabulary Item": vocab_row.get('Base Vocabulary Item', ''),
+                                    "Question Prompt": question_prompt,
+                                    "Answer A": options[0],
+                                    "Answer B": options[1],
+                                    "Answer C": options[2],
+                                    "Answer D": options[3],
+                                    "Correct Answer": correct_letter
+                                }
+                                vocab_questions.append(vocab_question)
+                                
+                                log_entry = f"Assembled question {i+1} for '{vocab_row.get('Base Vocabulary Item', '')}' ({vocab_row.get('Part of Speech', '')})"
+                                st.session_state.debug_logs.append(log_entry)
+                        
+                        status_text.empty()
+                        
+                        st.session_state.debug_logs.append(f"\nTOTAL ASSEMBLED: {len(vocab_questions)}")
+                        
+                        # Display results
+                        if vocab_questions:
+                            st.success(f"Successfully generated {len(vocab_questions)} vocabulary questions!")
+                            
+                            vocab_questions_df = pd.DataFrame(vocab_questions)
+                            
+                            # Display results with highlighting
+                            st.subheader("Generated Questions")
+                            st.dataframe(vocab_questions_df, use_container_width=True)
+                            
+                            # Download button
+                            csv_output = vocab_questions_df.to_csv(index=False).encode('utf-8')
+                            st.download_button(
+                                label="📥 Download Vocabulary Questions CSV",
+                                data=csv_output,
+                                file_name=f"vocab_questions_{vocab_cefr}_{len(vocab_questions)}items.csv",
+                                mime="text/csv",
+                            )
+                            
+                            # Generation summary
+                            with st.expander("Generation Summary", expanded=False):
+                                st.write(f"**CEFR Level:** {vocab_cefr}")
+                                st.write(f"**Question Form:** {question_form}")
+                                st.write(f"**Definitions Used:** {'Yes' if use_definitions else 'No'}")
+                                st.write(f"**Total Questions:** {len(vocab_questions)}")
+                                st.write(f"**Success Rate:** {len(vocab_questions)}/{len(selected_vocab)} ({100*len(vocab_questions)/len(selected_vocab):.1f}%)")
+                        
+                    except Exception as e:
+                        st.session_state.debug_logs.append(f"\nCRITICAL EXCEPTION: {str(e)}")
+                        import traceback
+                        st.session_state.debug_logs.append(f"Traceback:\n{traceback.format_exc()}")
+                        st.error(f"Error: {e}")
+                        with st.expander("🔍 DEBUG: Exception Details", expanded=True):
+                            st.error(str(e))
+                            st.code(traceback.format_exc())
