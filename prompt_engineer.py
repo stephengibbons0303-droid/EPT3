@@ -1,5 +1,7 @@
 import json
+import random
 import pandas as pd
+import re
 
 
 # --------------------------------------------------------------------------
@@ -156,94 +158,316 @@ MANDATORY OUTPUT FORMAT:
 VERIFICATION: Count your question objects before submitting. You must have exactly {len(job_list)} items in the "questions" array.
 """
     return system_msg, user_msg
+# =============================================================================
+# HELPER FUNCTIONS FOR DUAL SELECTION
+# =============================================================================
 
+def get_first_word(vocab_item):
+    """
+    Extract the first word from multi-word vocabulary items.
+    Examples: "clear up" → "clear", "belong (to)" → "belong", "add on" → "add"
+    """
+    # Remove parentheses and their contents
+    cleaned = re.sub(r'\([^)]*\)', '', vocab_item)
+    # Split and get first word
+    words = cleaned.strip().split()
+    return words[0] if words else vocab_item
+
+
+def get_initial_letter(vocab_item):
+    """
+    Get the first letter of the first word.
+    """
+    first_word = get_first_word(vocab_item)
+    return first_word[0].lower() if first_word else ''
+
+
+def get_phonetic_similar_letters(letter):
+    """
+    Return phonetically similar letters for fallback matching.
+    Used when initial letter pool is limited.
+    """
+    phonetic_groups = {
+        'c': ['k', 'q'],  # hard c sound
+        'k': ['c', 'q'],
+        'q': ['c', 'k'],
+        's': ['c', 'z'],  # soft s/c sound
+        'z': ['s'],
+        'f': ['ph'],
+        'ph': ['f'],
+        'j': ['g'],  # soft g sound
+        'g': ['j'],
+        'i': ['y'],  # initial vowel sounds
+        'y': ['i']
+    }
+    return phonetic_groups.get(letter.lower(), [])
+
+
+def python_select_by_pos(vocab_df, target_vocab, target_pos, max_items=4):
+    """
+    Select distractors by matching part of speech.
+    Returns up to max_items vocabulary items.
+    """
+    target_vocab_lower = target_vocab.lower().strip()
+    target_pos_lower = target_pos.lower().strip()
+    
+    # Filter by same part of speech
+    same_pos = vocab_df[
+        vocab_df['Part of Speech'].str.lower().str.strip() == target_pos_lower
+    ]
+    
+    # Exclude the target vocabulary
+    same_pos = same_pos[
+        same_pos['Base Vocabulary Item'].str.lower().str.strip() != target_vocab_lower
+    ]
+    
+    # Randomly select up to max_items
+    if len(same_pos) >= max_items:
+        selected = same_pos.sample(n=max_items)
+    else:
+        selected = same_pos
+    
+    return selected['Base Vocabulary Item'].tolist()
+
+
+def python_select_by_initial_letter(vocab_df, target_vocab, max_items=4, exclude_items=None):
+    """
+    Select distractors by matching initial letter of first word.
+    Includes phonetic fallback if pool is limited.
+    
+    Args:
+        vocab_df: The vocabulary dataframe
+        target_vocab: The target vocabulary item
+        max_items: Maximum number to select
+        exclude_items: List of items to exclude (already selected by POS)
+    
+    Returns:
+        List of vocabulary items matching initial letter
+    """
+    if exclude_items is None:
+        exclude_items = []
+    
+    target_vocab_lower = target_vocab.lower().strip()
+    target_letter = get_initial_letter(target_vocab)
+    
+    # Get all vocab items with same initial letter
+    def matches_initial_letter(vocab_item):
+        return get_initial_letter(vocab_item) == target_letter
+    
+    same_letter = vocab_df[
+        vocab_df['Base Vocabulary Item'].apply(matches_initial_letter)
+    ]
+    
+    # Exclude target vocab and already-selected items
+    exclude_lower = [item.lower().strip() for item in exclude_items + [target_vocab]]
+    same_letter = same_letter[
+        ~same_letter['Base Vocabulary Item'].str.lower().str.strip().isin(exclude_lower)
+    ]
+    
+    # If we have enough, select and return
+    if len(same_letter) >= max_items:
+        selected = same_letter.sample(n=max_items)
+        return selected['Base Vocabulary Item'].tolist()
+    
+    # If pool is limited, collect what we have
+    candidates = same_letter['Base Vocabulary Item'].tolist()
+    
+    # PHONETIC FALLBACK: Try phonetically similar letters
+    phonetic_letters = get_phonetic_similar_letters(target_letter)
+    
+    for phon_letter in phonetic_letters:
+        if len(candidates) >= max_items:
+            break
+        
+        def matches_phonetic_letter(vocab_item):
+            return get_initial_letter(vocab_item) == phon_letter
+        
+        phonetic_matches = vocab_df[
+            vocab_df['Base Vocabulary Item'].apply(matches_phonetic_letter)
+        ]
+        
+        phonetic_matches = phonetic_matches[
+            ~phonetic_matches['Base Vocabulary Item'].str.lower().str.strip().isin(
+                exclude_lower + [c.lower() for c in candidates]
+            )
+        ]
+        
+        needed = max_items - len(candidates)
+        if len(phonetic_matches) > 0:
+            additional = phonetic_matches.sample(n=min(needed, len(phonetic_matches)))
+            candidates.extend(additional['Base Vocabulary Item'].tolist())
+    
+    return candidates[:max_items]
+
+# =============================================================================
+# MAIN STAGE 2 FUNCTION - DUAL SELECTION + LLM SUPPLEMENTATION
+# =============================================================================
 
 def create_vocab_list_stage2_prompt(job_list, stage1_outputs, vocabulary_list_df):
     """
-    STAGE TWO for vocabulary list: Generates candidate distractors using HYBRID approach.
-    - 2-3 distractors from the uploaded vocabulary list (same part of speech when possible)
-    - 1-2 generated semantic alternatives
+    STAGE TWO for vocabulary list: DUAL SELECTION STRATEGY
+    
+    Python performs two selection runs:
+    1. Select up to 4 items by matching Part of Speech
+    2. Select up to 4 items by matching initial letter (with phonetic fallback)
+    
+    LLM supplements to reach 8 total candidates:
+    - Prioritize antonyms of target vocabulary (for adj/verb/adverb/prep)
+    - Fill remainder with synonyms of Python-selected distractors
     """
-    system_msg = f"""You are an expert ELT test designer specializing in vocabulary assessment. You will generate candidate distractors for exactly {len(job_list)} vocabulary questions using a hybrid sourcing strategy.
+    system_msg = f"""You are an expert ELT test designer specializing in vocabulary assessment. You will supplement pre-selected vocabulary candidates with additional distractors for exactly {len(job_list)} questions.
 
 CRITICAL: Your entire response must be a JSON object with a "candidates" key containing an array of exactly {len(job_list)} candidate sets."""
     
-    vocab_items_by_pos = {}
-    if vocabulary_list_df is not None and not vocabulary_list_df.empty:
-        for _, row in vocabulary_list_df.iterrows():
-            pos = row.get('Part of Speech', 'unknown')
-            vocab_item = row.get('Base Vocabulary Item', '')
-            if vocab_item:
-                if pos not in vocab_items_by_pos:
-                    vocab_items_by_pos[pos] = []
-                vocab_items_by_pos[pos].append(vocab_item)
+    # PYTHON DUAL SELECTION: POS + Initial Letter
+    pre_selected_data = []
     
-    vocab_pool_summary = json.dumps(vocab_items_by_pos, indent=2)
+    for i, job in enumerate(job_list):
+        stage1_data = stage1_outputs[i]
+        target_vocab = job['target_vocabulary']
+        target_pos = job['part_of_speech']
+        
+        # SELECTION RUN 1: By Part of Speech (max 4)
+        pos_selected = python_select_by_pos(
+            vocabulary_list_df,
+            target_vocab,
+            target_pos,
+            max_items=4
+        )
+        
+        # SELECTION RUN 2: By Initial Letter (max 4, exclude POS-selected)
+        letter_selected = python_select_by_initial_letter(
+            vocabulary_list_df,
+            target_vocab,
+            max_items=4,
+            exclude_items=pos_selected
+        )
+        
+        total_python = len(pos_selected) + len(letter_selected)
+        needed_from_llm = max(0, 8 - total_python)
+        
+        pre_selected_data.append({
+            "Item Number": stage1_data.get("Item Number"),
+            "Target Vocabulary": target_vocab,
+            "Part of Speech": target_pos,
+            "Complete Sentence": stage1_data.get("Complete Sentence"),
+            "Correct Answer": stage1_data.get("Correct Answer"),
+            "POS-selected": pos_selected,
+            "Letter-selected": letter_selected,
+            "Total from vocab list": total_python,
+            "Needed from LLM": needed_from_llm
+        })
     
+    # LLM SUPPLEMENTATION TASK
     user_msg = f"""
-TASK: Generate 5 candidate distractors for ALL {len(job_list)} VOCABULARY questions using HYBRID sourcing.
+TASK: Supplement the pre-selected vocabulary candidates to create a pool of exactly 8 distractor candidates for each question.
 
-INPUT FROM STAGE 1:
-{json.dumps(stage1_outputs, indent=2)}
+INPUT (Complete sentences with pre-selected vocabulary):
+{json.dumps(pre_selected_data, indent=2)}
 
-AVAILABLE VOCABULARY POOL (organized by part of speech):
-{vocab_pool_summary}
+BACKGROUND:
 
-HYBRID DISTRACTOR SOURCING STRATEGY:
+Students have recently studied this vocabulary list and may have memorized it. They are MORE likely to:
+- Confuse meanings of familiar words from the list
+- Spot unfamiliar words (not in the list) as obvious wrong answers
 
-For EACH question, generate 5 candidates using this approach:
-- **2-3 distractors:** Select from the vocabulary pool (preferably matching the target word's part of speech)
-- **1-2 distractors:** Generate semantic alternatives that aren't in the vocabulary pool
+Therefore, the Python code has already selected distractors FROM the vocabulary list using two strategies:
+1. **POS-selected**: Items with the same part of speech as the target
+2. **Letter-selected**: Items with similar initial letters (phonetic confusion for lower-level learners)
 
-CONSTRAINTS:
+YOUR TASK:
 
-1. **WORD COUNT LIMIT:** Each candidate must be MAXIMUM 3 words.
+For EACH question, you must supplement the pre-selected candidates to reach exactly 8 total candidates.
 
-2. **VOCABULARY POOL SELECTION RULES:**
-   - Prefer items from the SAME part of speech as the target vocabulary
-   - If insufficient items in same POS, use items from related POS
-   - Exclude the target vocabulary item itself
-   - Select items that are semantically plausible but contextually inappropriate
+The number you need to add is shown in "Needed from LLM" for each question.
 
-3. **GENERATED ALTERNATIVES RULES:**
-   - Must match the exact grammatical form of the target vocabulary
-   - Should be semantically related but contextually wrong
-   - Can include synonyms, near-synonyms, or words from the same semantic field
+SUPPLEMENTATION STRATEGY:
 
-4. **EXACT INFLECTIONAL FORM MATCHING:** ALL candidates must match the PRECISE grammatical form of the correct answer.
+**Priority 1: Generate antonyms of the target vocabulary** (when applicable)
+- For adjectives, verbs, adverbs, and prepositions, try to create at least ONE antonym
+- Example: target "calm" → generate "agitated" or "turbulent"
+- Example: target "dangerous" → generate "safe"
+- Antonyms should match the exact grammatical form of the target (same tense, number, etc.)
 
-5. **CONTEXTUAL INAPPROPRIATENESS TYPES:**
-   - Register conflict
-   - Collocational violation
-   - Semantic mismatch
-   - Connotation error
+**Priority 2: Generate synonyms/near-synonyms of the Python-selected distractors**
+- Look at the items in "POS-selected" and "Letter-selected"
+- Generate words semantically similar to THOSE items (not the target)
+- Example: If "climate" is in POS-selected, generate "weather" or "temperature"
+- This maintains the "familiar vocabulary confusion" strategy
 
-6. **NO LEXICAL OVERLAP:** Do not use any form of the correct answer word or its root in candidates.
+CRITICAL CONSTRAINTS:
 
-7. **POST-BLANK LEXICAL OVERLAP PROHIBITION:** Do NOT use any words that appear AFTER the blank in the Complete Sentence.
+1. **EXACT COUNT**: You must add EXACTLY the number shown in "Needed from LLM"
 
-8. **ANTI-REPETITION:** Avoid using identical candidate words across multiple questions.
+2. **WORD COUNT LIMIT**: Each generated candidate must be MAXIMUM 3 words
+
+3. **GRAMMATICAL FORM MATCHING**: Generated candidates must match the exact grammatical form of the target vocabulary
+
+4. **NO NEAR-SYNONYMS OF TARGET**: Do NOT generate near-synonyms or direct synonyms of the target vocabulary (except for intentional antonyms)
+
+5. **PRESERVE PRE-SELECTED**: Include ALL items from both "POS-selected" and "Letter-selected" in your output, then add your generated items
 
 MANDATORY OUTPUT FORMAT:
 {{
   "candidates": [
     {{
       "Item Number": "...",
-      "Candidate A": "...",
-      "Candidate B": "...",
-      "Candidate C": "...",
-      "Candidate D": "...",
-      "Candidate E": "...",
-      "Source Notes": "...[which candidates are from pool vs. generated]..."
+      "Candidate A": "...[from POS-selected or Letter-selected or LLM-generated]...",
+      "Candidate B": "...[from POS-selected or Letter-selected or LLM-generated]...",
+      "Candidate C": "...[from POS-selected or Letter-selected or LLM-generated]...",
+      "Candidate D": "...[from POS-selected or Letter-selected or LLM-generated]...",
+      "Candidate E": "...[from POS-selected or Letter-selected or LLM-generated]...",
+      "Candidate F": "...[from POS-selected or Letter-selected or LLM-generated]...",
+      "Candidate G": "...[from POS-selected or Letter-selected or LLM-generated]...",
+      "Candidate H": "...[from POS-selected or Letter-selected or LLM-generated]...",
+      "Source Notes": "e.g., 'A-D from vocab list, E antonym of target, F-H synonyms of list items'"
     }},
     ... (exactly {len(job_list)} candidate sets)
   ]
 }}
 
-VERIFICATION: You must generate exactly {len(job_list)} candidate sets with 5 candidates each.
+EXAMPLE:
+
+Input:
+- Target: "dangerous" (adjective)
+- POS-selected: ["calm", "clear", "humid"]
+- Letter-selected: ["deep", "during"]
+- Total: 5, Needed: 3
+
+Output Candidates:
+- A: "calm" (from POS)
+- B: "clear" (from POS)
+- C: "humid" (from POS)
+- D: "deep" (from Letter)
+- E: "during" (from Letter)
+- F: "safe" (LLM antonym of "dangerous")
+- G: "peaceful" (LLM synonym of "calm")
+- H: "transparent" (LLM synonym of "clear")
+
+VERIFICATION: You must generate exactly {len(job_list)} candidate sets with exactly 8 candidates each.
 """
     return system_msg, user_msg
 
+
+# =============================================================================
+# INTEGRATION NOTES
+# =============================================================================
+# 
+# This completely replaces your current create_vocab_list_stage2_prompt function.
+# 
+# Make sure to add all the helper functions above it in your prompt_engineer.py:
+# - get_first_word()
+# - get_initial_letter()
+# - get_phonetic_similar_letters()
+# - python_select_by_pos()
+# - python_select_by_initial_letter()
+# 
+# Then replace the main Stage 2 function with this new version.
+# 
+# The rest of your Tab 4 code (Stage 1, Stage 3, final assembly) remains unchanged.
+# Stage 3 will still receive 8 candidates and select the best 5 for validation,
+# then narrow down to the final 3 distractors.
+# =============================================================================
 
 def create_vocab_list_stage3_prompt(job_list, stage1_outputs, stage2_outputs):
     """
