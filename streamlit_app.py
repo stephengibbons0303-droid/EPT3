@@ -802,7 +802,13 @@ with tab3:
 with tab4:
     st.header("📚 Vocabulary List Generator")
     st.caption("Upload a vocabulary list CSV and generate questions for specific target words")
-    
+
+        # ADD THESE LINES HERE (before file uploader):
+    if 'uploaded_vocab_df' not in st.session_state:
+        st.session_state.uploaded_vocab_df = None
+    if 'last_uploaded_file_id' not in st.session_state:
+        st.session_state.last_uploaded_file_id = None
+        
     # File upload section
     st.subheader("1. Upload Vocabulary List")
     vocab_csv_file = st.file_uploader(
