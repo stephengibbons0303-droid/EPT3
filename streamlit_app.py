@@ -342,6 +342,13 @@ if example_banks is None:
 
 st.write("This version implements architectural separation of generation and validation.")
 
+# Initialize tab persistence in session state
+if 'file_upload_processed' not in st.session_state:
+    st.session_state.file_upload_processed = False
+
+if 'uploaded_vocab_df' not in st.session_state:
+    st.session_state.uploaded_vocab_df = None
+    
 tab1, tab2, tab3, tab4 = st.tabs(["🚀 Generator", "🔧 Refinement Workshop", "🐛 Debug Logs", "📚 Vocabulary List Generator"])
 
 # =============================
@@ -805,48 +812,37 @@ with tab4:
         key="vocab_csv_upload"
     )
     
-    vocab_df = None
+    # Process uploaded file and store in session state to prevent tab switching
     if vocab_csv_file is not None:
-        try:
-            vocab_df = pd.read_csv(vocab_csv_file)
-            
-            # VALIDATE REQUIRED COLUMNS
-            required_columns = ['ConceptID', 'Base Vocabulary Item', 'Part of Speech', 'Definition']
-            missing_columns = [col for col in required_columns if col not in vocab_df.columns]
-            
-            if missing_columns:
-                st.error(f"Missing required columns: {', '.join(missing_columns)}")
-                st.info("Your CSV must include: ConceptID, Base Vocabulary Item, Part of Speech, Definition")
-                vocab_df = None
-            else:
-                st.success(f"✓ Loaded {len(vocab_df)} vocabulary items with all required fields")
+        # Create unique file ID to track if this is a new upload
+        file_id = f"{vocab_csv_file.name}_{vocab_csv_file.size}"
+        
+        # Only process if it's a new file
+        if st.session_state.last_uploaded_file_id != file_id:
+            try:
+                vocab_df = pd.read_csv(vocab_csv_file)
                 
-                # Display column validation summary
-                with st.expander("Column Validation Summary", expanded=False):
-                    validation_data = {
-                        "Column": required_columns,
-                        "Status": ["✓ Found" for _ in required_columns],
-                        "Sample Value": [
-                            str(vocab_df[col].iloc[0])[:50] if len(vocab_df) > 0 else "N/A" 
-                            for col in required_columns
-                        ]
-                    }
-                    st.dataframe(pd.DataFrame(validation_data), use_container_width=True)
+                # Store in session state
+                st.session_state.uploaded_vocab_df = vocab_df
+                st.session_state.last_uploaded_file_id = file_id
                 
-                # Display preview with all essential columns
-                with st.expander("Preview uploaded vocabulary (first 10 items)", expanded=False):
-                    preview_cols = ['ConceptID', 'Base Vocabulary Item', 'Part of Speech', 'Definition']
-                    st.dataframe(vocab_df[preview_cols].head(10), use_container_width=True)
+                # VALIDATE REQUIRED COLUMNS
+                required_columns = ['ConceptID', 'Base Vocabulary Item', 'Part of Speech', 'Definition']
+                missing_columns = [col for col in required_columns if col not in vocab_df.columns]
+                
+                if missing_columns:
+                    st.error(f"Missing required columns: {', '.join(missing_columns)}")
+                    st.info("Your CSV must include: ConceptID, Base Vocabulary Item, Part of Speech, Definition")
+                    st.session_state.uploaded_vocab_df = None
+                else:
+                    st.success(f"✓ Loaded {len(vocab_df)} vocabulary items with all required fields")
                     
-                # Display part of speech distribution
-                with st.expander("Part of Speech Distribution", expanded=False):
-                    pos_counts = vocab_df['Part of Speech'].value_counts()
-                    st.bar_chart(pos_counts)
-                    st.caption(f"Total unique parts of speech: {len(pos_counts)}")
-                
-        except Exception as e:
-            st.error(f"Error reading CSV: {e}")
-            vocab_df = None
+            except Exception as e:
+                st.error(f"Error reading CSV: {e}")
+                st.session_state.uploaded_vocab_df = None
+    
+    # Use the dataframe from session state for all subsequent operations
+    vocab_df = st.session_state.uploaded_vocab_df
     
     if vocab_df is not None:
         st.divider()
