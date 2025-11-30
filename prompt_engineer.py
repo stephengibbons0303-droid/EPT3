@@ -471,9 +471,10 @@ VERIFICATION: You must generate exactly {len(job_list)} candidate sets with exac
 
 def create_vocab_list_stage3_prompt(job_list, stage1_outputs, stage2_outputs):
     """
-    STAGE THREE for vocabulary list: Binary validation (same as standard vocabulary validation).
+    STAGE THREE for vocabulary list: Binary validation with PRAGMATIC FILTERING.
+    IMPROVED: Explicit collocation and semantic compatibility checks.
     """
-    system_msg = f"""You are an expert English vocabulary validator. You will evaluate candidate distractors for exactly {len(job_list)} vocabulary questions and return your validated selections in a JSON object with a "validated" key."""
+    system_msg = f"""You are an expert English vocabulary validator with deep knowledge of collocations and pragmatic appropriateness. You will evaluate candidate distractors for exactly {len(job_list)} vocabulary questions and return your validated selections in a JSON object with a "validated" key."""
     
     validation_input = []
     for i, (job, s1, s2) in enumerate(zip(job_list, stage1_outputs, stage2_outputs)):
@@ -490,6 +491,9 @@ def create_vocab_list_stage3_prompt(job_list, stage1_outputs, stage2_outputs):
             "Candidate C": s2.get("Candidate C", ""),
             "Candidate D": s2.get("Candidate D", ""),
             "Candidate E": s2.get("Candidate E", ""),
+            "Candidate F": s2.get("Candidate F", ""),
+            "Candidate G": s2.get("Candidate G", ""),
+            "Candidate H": s2.get("Candidate H", ""),
             "CEFR": job['cefr']
         })
     
@@ -501,23 +505,76 @@ VALIDATION INPUT:
 
 VALIDATION PROCEDURE:
 
-For EACH question, test ALL FIVE candidates:
+For EACH question, test ALL EIGHT candidates using this THREE-TIER FILTER:
 
-1. **SENTENCE RECONSTRUCTION:** Replace the Correct Answer with each candidate individually.
+**TIER 1: GRAMMATICAL CORRECTNESS (Required)**
+Replace the Correct Answer with each candidate individually.
+- REJECT if grammatically incorrect (wrong part of speech, agreement errors, etc.)
+- RETAIN if grammatically correct (proper sentence structure)
 
-2. **EXAMINER ACCEPTANCE TEST:** "Would a test examiner award full marks if a student chose this candidate?"
-   - YES = REJECT the candidate
-   - NO = RETAIN the candidate
+**TIER 2: MULTIPLE CORRECT ANSWER CHECK (NEW - Critical)**
+For candidates that pass Tier 1, ask: "Would a test examiner accept this as a correct answer?"
 
-3. **UNIQUENESS CHECK:** "Would both the correct answer AND this candidate receive full marks?" If YES, reject.
+REJECT if the candidate is:
+- A plausible synonym of the correct answer
+- Semantically appropriate for the context
+- Would make logical sense in the sentence
 
-4. **FILTERING CRITERIA:**
-   - REJECT candidates that are grammatically incorrect
-   - REJECT candidates that are semantically appropriate
-   - REJECT candidates that native speakers would accept
-   - RETAIN only candidates that are grammatically correct BUT semantically/idiomatically wrong
+RETAIN if the candidate is:
+- Grammatically correct BUT semantically inappropriate
+- Creates a pragmatically odd/unnatural sentence
+- Would NOT be accepted as a correct answer
 
-5. **SELECT FINAL THREE:** From retained pool, select the best THREE based on plausibility and diversity.
+**CRITICAL DISTINCTION EXAMPLES**:
+
+Example 1: "We spent our day relaxing on the __________" (Correct: beach)
+
+REJECT THESE (too plausible, multiple correct answers):
+- "patio" ❌ REJECT - examiner would accept this (plausible location)
+- "deck" ❌ REJECT - examiner would accept this (plausible location)
+- "balcony" ❌ REJECT - examiner would accept this (plausible location)
+
+RETAIN THESE (grammatically fine, semantically wrong = good distractors):
+- "professional" ✓ RETAIN - grammatically correct, semantically odd (people don't relax on professions)
+- "climate" ✓ RETAIN - grammatically correct, semantically wrong (can't relax on climate)
+
+REJECT THESE (too obviously wrong):
+- "builder" ❌ REJECT - wrong category (person, not place) - too easy to eliminate
+- "high school" ❌ REJECT - pragmatically absurd in this context - too easy to eliminate
+
+Example 2: "After the storm, the sea was completely __________" (Correct: calm)
+
+REJECT THESE (too plausible, multiple correct answers):
+- "still" ❌ REJECT - examiner would accept this (plausible descriptor)
+- "peaceful" ❌ REJECT - examiner would accept this (plausible synonym)
+- "quiet" ❌ REJECT - examiner would accept this (plausible descriptor)
+
+RETAIN THESE (grammatically fine, semantically wrong = good distractors):
+- "professional" ✓ RETAIN - grammatically correct, semantically inappropriate (sea can't be professional)
+- "confusing" ✓ RETAIN - grammatically correct, semantically odd (unusual adjective for sea)
+
+REJECT THESE (too obviously wrong):
+- "fish" ❌ REJECT - wrong part of speech, grammatically broken
+- "builder" ❌ REJECT - wrong part of speech, obviously wrong
+
+Example 3: "The instructions need to be __________" (Correct: clear)
+
+REJECT THESE (too plausible):
+- "simple" ❌ REJECT - examiner would accept
+- "detailed" ❌ REJECT - examiner would accept
+
+RETAIN THESE (good distractors):
+- "freezing" ✓ RETAIN - grammatically correct adjective, semantically incompatible with instructions
+- "own" ✓ RETAIN - grammatically correct, semantically wrong
+
+REJECT THESE (too obvious):
+- "fish" ❌ REJECT - wrong part of speech
+
+**TIER 3: PEDAGOGICAL QUALITY (Final Selection)**
+From candidates that pass Tiers 1 and 2, select the BEST THREE based on:
+- Variety of semantic incompatibility types
+- CEFR-appropriate challenge (requires thought to eliminate, not instantly obvious)
+- Avoid selecting multiple candidates from same semantic field
 
 MANDATORY OUTPUT FORMAT:
 {{
@@ -527,7 +584,7 @@ MANDATORY OUTPUT FORMAT:
       "Selected Distractor A": "...",
       "Selected Distractor B": "...",
       "Selected Distractor C": "...",
-      "Validation Notes": "..."
+      "Validation Notes": "Brief explanation: [X] rejected for collocation violations, [Y] rejected for semantic absurdity, selected [ABC] for plausibility"
     }},
     ... (exactly {len(job_list)} validated sets)
   ]
@@ -537,6 +594,10 @@ VERIFICATION: You must provide exactly {len(job_list)} validated distractor sets
 """
     return system_msg, user_msg
 
+# INTEGRATION INSTRUCTIONS:
+# Replace the existing create_vocab_list_stage3_prompt function in prompt_engineer.py
+# This version adds explicit pragmatic and collocational filtering
+# Expected improvement: 34% → 60-70% plausible distractors
 
 # =============================================================================
 # END OF NEW FUNCTIONS
