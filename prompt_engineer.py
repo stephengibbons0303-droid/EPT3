@@ -399,13 +399,32 @@ CRITICAL CONSTRAINTS:
 
 1. **EXACT COUNT**: You must add EXACTLY the number shown in "Needed from LLM"
 
-2. **WORD COUNT LIMIT**: Each generated candidate must be MAXIMUM 3 words
+2. **WORD COUNT LIMIT**: Each generated candidate must be MAXIMUM 1 WORD (no slashes, no multiple forms)
 
-3. **GRAMMATICAL FORM MATCHING**: Generated candidates must match the exact grammatical form of the target vocabulary
+3. **EXACT INFLECTIONAL FORM MATCHING (CRITICAL)**: 
+   - Generated candidates must match the PRECISE grammatical form of the target vocabulary
+   - Same tense, aspect, person, number, and voice
+   - Examples:
+     * Target: "blew" (past) → Generate: "boiled", "fried", "baked" (NOT "boil", "fry", "bake")
+     * Target: "blowing" (gerund) → Generate: "boiling", "frying", "baking" (NOT "boil", "fry", "bake")
+     * Target: "blows" (3rd singular) → Generate: "boils", "fries", "bakes" (NOT "boil", "fry", "bake")
+     * Target: "blow" (base) → Generate: "boil", "fry", "bake" (NOT "boils", "boiled", "boiling")
+   
+   **FORM IDENTIFICATION RULE**: 
+   - Check the Complete Sentence context
+   - If target follows "to" or modal (can/will/should) → BASE FORM
+   - If target follows "he/she/it" → 3RD SINGULAR (-s/-es)
+   - If target has time marker "yesterday" → PAST TENSE (-ed or irregular)
+   - If target follows "is/was/been" → GERUND (-ing) or PAST PARTICIPLE (-ed/-en)
 
-4. **NO NEAR-SYNONYMS OF TARGET**: Do NOT generate near-synonyms or direct synonyms of the target vocabulary (except for intentional antonyms)
+4. **SINGLE WORD ONLY**: 
+   - NEVER use slashes: "blow/blew/blown" is WRONG
+   - NEVER list multiple forms: "boil or boiled" is WRONG
+   - Each candidate must be ONE inflected form: "boiled" is CORRECT
 
-5. **PRESERVE PRE-SELECTED**: Include ALL items from both "POS-selected" and "Letter-selected" in your output, then add your generated items
+5. **NO NEAR-SYNONYMS OF TARGET**: Do NOT generate near-synonyms or direct synonyms of the target vocabulary (except for intentional antonyms)
+
+6. **PRESERVE PRE-SELECTED**: Include ALL items from both "POS-selected" and "Letter-selected" in your output, then add your generated items
 
 MANDATORY OUTPUT FORMAT:
 {{
