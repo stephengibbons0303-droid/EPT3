@@ -326,7 +326,11 @@ if 'sequential_stage3_data' not in st.session_state:
     st.session_state.sequential_stage3_data = None
 if 'debug_logs' not in st.session_state:
     st.session_state.debug_logs = []
-
+# Tab 4 vocabulary upload session state
+if 'uploaded_vocab_df' not in st.session_state:
+    st.session_state.uploaded_vocab_df = None
+if 'last_uploaded_file_id' not in st.session_state:
+    st.session_state.last_uploaded_file_id = None
 # -----------------------------------------------------------------
 # Main UI
 # -----------------------------------------------------------------
