@@ -103,17 +103,29 @@ The target word should complete the logical connection between clauses.
     system_msg = f"""You are an expert ELT content creator. You will generate exactly {len(job_list)} complete test questions in a single JSON response targeting specific vocabulary items provided by the user.
 
 CRITICAL: Your entire response must be a JSON object with a "questions" key containing an array of exactly {len(job_list)} question objects."""
-    
     job_specs = []
     for job in job_list:
+    # Preprocess target vocabulary to remove slashes and parentheses
+        target_vocab = job['target_vocabulary']
+    
+    # Remove parentheses content: "belong (to)" → "belong"
+        if '(' in target_vocab:
+            target_vocab = target_vocab.split('(')[0].strip()
+    
+    # For slash-separated forms, take the base form (first one)
+    # "blow/blew/blown" → "blow"
+    # "be/was/been over" → "be over"
+        if '/' in target_vocab:
+            target_vocab = target_vocab.split('/')[0].strip()
+    
         job_specs.append({
             "job_id": job['job_id'],
             "cefr": job['cefr'],
-            "target_vocabulary": job['target_vocabulary'],
+            "target_vocabulary": target_vocab,  # Using cleaned version
             "definition": job.get('definition', ''),
             "part_of_speech": job.get('part_of_speech', '')
         })
-    
+ 
     user_msg = f"""
 TASK: Create exactly {len(job_list)} vocabulary test questions targeting specific vocabulary items.
 
@@ -125,6 +137,13 @@ VOCABULARY TARGETS (one question for each):
 GENERATION INSTRUCTIONS FOR EACH QUESTION:
 
 1. **TARGET VOCABULARY INTEGRATION:** The "Complete Sentence" must contain the target vocabulary item in a natural, authentic context appropriate for the CEFR level. Use the provided definition to ensure accurate usage.
+
+1.5. **INFLECTION REQUIREMENT:** You must conjugate/inflect the target vocabulary to match the sentence context. 
+     - Target "blow" in past context → Use "blew"
+     - Target "belong" with "it" subject → Use "belongs"
+     - Target "be over" in past → Use "was over"
+     - DO NOT use the base form if context requires inflection
+     - The "Correct Answer" field must contain the INFLECTED form, not the base form
 
 2. **PART OF SPEECH MATCHING:** Ensure the target vocabulary is used in the correct grammatical form matching the "Part of Speech" field.
 
