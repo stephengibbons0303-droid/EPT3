@@ -572,18 +572,16 @@ with tab1:
                                                 stage3_data.get("Selected Distractor C", ""),
                                                 correct_answer
                                             ]
-                                            random.shuffle(options)
-                                            correct_letter = chr(65 + options.index(correct_answer))
                                             
                                             final_question = {
                                                 "Item Number": stage1_data.get("Item Number", ""),
                                                 "Assessment Focus": stage1_data.get("Assessment Focus", ""),
                                                 "Question Prompt": question_prompt,
-                                                "Answer A": options[0],
-                                                "Answer B": options[1],
-                                                "Answer C": options[2],
-                                                "Answer D": options[3],
-                                                "Correct Answer": correct_letter,
+                                                "Answer A": correct_answer,
+                                                "Answer B": stage3_data.get("Selected Distractor A", ""),
+                                                "Answer C": stage3_data.get("Selected Distractor B", ""),
+                                                "Answer D": stage3_data.get("Selected Distractor C", ""),
+                                                "Correct Answer": "A",
                                                 "CEFR rating": stage1_data.get("CEFR rating", ""),
                                                 "Category": stage1_data.get("Category", "")
                                             }
@@ -1095,18 +1093,16 @@ with tab4:
                                     stage3_data.get("Selected Distractor C", ""),
                                     correct_answer
                                 ]
-                                random.shuffle(options)
-                                correct_letter = chr(65 + options.index(correct_answer))
                                 
                                 vocab_question = {
                                     "ConceptID": vocab_row.get('ConceptID', ''),
                                     "Base Vocabulary Item": vocab_row.get('Base Vocabulary Item', ''),
                                     "Question Prompt": question_prompt,
-                                    "Answer A": options[0],
-                                    "Answer B": options[1],
-                                    "Answer C": options[2],
-                                    "Answer D": options[3],
-                                    "Correct Answer": correct_letter
+                                    "Answer A": correct_answer,
+                                    "Answer B": stage3_data.get("Selected Distractor A", ""),
+                                    "Answer C": stage3_data.get("Selected Distractor B", ""),
+                                    "Answer D": stage3_data.get("Selected Distractor C", ""),
+                                    "Correct Answer": "A"
                                 }
                                 vocab_questions.append(vocab_question)
                                 
