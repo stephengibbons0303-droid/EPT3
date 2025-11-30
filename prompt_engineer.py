@@ -426,6 +426,41 @@ CRITICAL CONSTRAINTS:
 
 6. **PRESERVE PRE-SELECTED**: Include ALL items from both "POS-selected" and "Letter-selected" in your output, then add your generated items
 
+FORM MATCHING EXAMPLES:
+
+Example 1 - Past Tense:
+- Complete Sentence: "The wind **blew** all day."
+- Target: "blew" (past tense of "blow")
+- POS-selected: ["calm", "clear", "humid"] (adjectives - WRONG, reject these)
+- Letter-selected: ["beach", "bake"]
+- LLM must generate: "boiled", "fried" (past tense verbs)
+- WRONG: "boil", "fry" (base form)
+- WRONG: "blow/blew/blown" (multiple forms)
+
+Example 2 - Base Form:
+- Complete Sentence: "I need to **clean** the kitchen."
+- Target: "clean" (base form after "to")
+- POS-selected: ["cook", "wash", "dust"]
+- LLM can add: "scrub", "tidy" (base form verbs)
+- WRONG: "scrubbed", "tidied" (past tense)
+- WRONG: "scrubbing", "tidying" (gerund)
+
+Example 3 - 3rd Person Singular:
+- Complete Sentence: "She **cooks** every evening."
+- Target: "cooks" (3rd person singular)
+- Letter-selected: ["climbs", "cleans", "closes"]
+- LLM must generate: "bakes", "boils", "fries" (3rd person with -s)
+- WRONG: "bake", "boil", "fry" (base form)
+- WRONG: "baked", "boiled", "fried" (past tense)
+
+Example 4 - Gerund:
+- Complete Sentence: "I enjoy **reading** books."
+- Target: "reading" (gerund after "enjoy")
+- POS-selected: ["writing", "playing", "singing"]
+- LLM can add: "cooking", "dancing" (gerund with -ing)
+- WRONG: "cook", "dance" (base form)
+- WRONG: "cooked", "danced" (past tense)
+
 MANDATORY OUTPUT FORMAT:
 {{
   "candidates": [
